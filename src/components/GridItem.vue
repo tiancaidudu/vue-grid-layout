@@ -86,7 +86,7 @@
     }
 </style>
 <script>
-    import {setTopLeft, setTopRight, setTransformRtl, setTransform} from '../helpers/utils';
+    import {setTopLeft, setTopRight, setTransformRtl, setTransform, rowIndex} from '../helpers/utils';
     import {getControlPosition, createCoreData} from '../helpers/draggableUtils';
     import {getDocumentDir} from "../helpers/DOM";
     //    var eventBus = require('./eventBus');
@@ -237,6 +237,8 @@
             };
 
             self.compactHandler = function (layout) {
+                // console.log(layout);
+                self.layout = layout
                 self.compact(layout);
             };
 
@@ -265,13 +267,18 @@
                self.cols = parseInt(colNum);
             }
 
+            self.setMargin = (margin) => {
+                self.margin = margin;
+            }
+
             this.eventBus.$on('updateWidth', self.updateWidthHandler);
             this.eventBus.$on('compact', self.compactHandler);
             this.eventBus.$on('setDraggable', self.setDraggableHandler);
             this.eventBus.$on('setResizable', self.setResizableHandler);
             this.eventBus.$on('setRowHeight', self.setRowHeightHandler);
             this.eventBus.$on('directionchange', self.directionchangeHandler);
-            this.eventBus.$on('setColNum', self.setColNum)
+            this.eventBus.$on('setColNum', self.setColNum);
+            this.eventBus.$on('setMargin', self.setMargin);
 
             this.rtl = getDocumentDir() === 'rtl';
         },
@@ -285,6 +292,7 @@
             this.eventBus.$off('setRowHeight', self.setRowHeightHandler);
             this.eventBus.$off('directionchange', self.directionchangeHandler);
             this.eventBus.$off('setColNum', self.setColNum);
+            this.eventBus.$off('setMargin', self.setMargin);
             this.interactObj.unset() // destroy interact intance
         },
         mounted: function () {
@@ -304,6 +312,8 @@
                 this.resizable = this.isResizable;
             }
             this.useCssTransforms = this.$parent.useCssTransforms;
+            this.customizeInner = this.$parent.customizeInner || false;
+            this.placeholderHeight = this.$parent.placeholderHeight || 0;
             this.createStyle();
         },
         watch: {
@@ -610,14 +620,24 @@
                         height: h === Infinity ? h : Math.round(this.rowHeight * h + Math.max(0, h - 1) * this.margin[1])
                     };
                 } else {
+                    // console.log('calcPosition:', this.margin);
+                    let height = h;
+                    if (h !== Infinity) {
+                        if (this.customizeInner) {
+                            height = Math.round(this.rowHeight * h + this.placeholderHeight);
+                        } else {
+                            height = Math.round(this.rowHeight * h + Math.max(0, h - 1) * this.margin[1]);
+                        }
+                    }
                     out = {
                         left: Math.round(colWidth * x + (x + 1) * this.margin[0]),
-                        top: Math.round(this.rowHeight * y + (y + 1) * this.margin[1]),
+                        top: Math.round(this.rowHeight * y + rowIndex(this.layout, {x, y, w, h})  * this.margin[1] + (this.customizeInner ? +this.placeholderHeight * rowIndex(this.layout, {x, y, w, h})  : 0)),
                         // 0 * Infinity === NaN, which causes problems with resize constriants;
                         // Fix this if it occurs.
                         // Note we do it here rather than later because Math.round(Infinity) causes deopt
                         width: w === Infinity ? w : Math.round(colWidth * w + Math.max(0, w - 1) * this.margin[0]),
-                        height: h === Infinity ? h : Math.round(this.rowHeight * h + Math.max(0, h - 1) * this.margin[1])
+                        // height: h === Infinity ? h : Math.round(this.rowHeight * h + Math.max(0, h - 1) * this.margin[1])
+                        height: height
                     };
                 }
 

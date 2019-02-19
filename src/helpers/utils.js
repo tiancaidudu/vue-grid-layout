@@ -34,6 +34,22 @@ export function bottom(layout: Layout): number {
   return max;
 }
 
+export function maxRows(layout: Layout): number {
+  let yList = [];
+  for (let i = 0, len = layout.length; i < len; i++) {
+    yList.push(layout[i].y);
+  }
+  var temp = new Set(yList);
+  return temp.size;
+}
+
+export function rowIndex(layout: Layout, layoutItem: LayoutItem): number {
+  if (!layout) return;
+  let rowsByIndex = layout.filter(item => item.x === layoutItem.x);
+  rowsByIndex.sort((a, b) => a.y - b.y);
+  return rowsByIndex.findIndex(item => item.y === layoutItem.y); 
+}
+
 export function cloneLayout(layout: Layout): Layout {
   const newLayout = Array(layout.length);
   for (let i = 0, len = layout.length; i < len; i++) {

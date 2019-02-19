@@ -102,6 +102,7 @@
         },
         created () {
             const self = this;
+            console.log(111)
 
             // Accessible refernces of functions for removing in beforeDestroy
             self.resizeEventHandler = function(eventType, i, x, y, h, w) {
@@ -120,7 +121,7 @@
         beforeDestroy: function(){
             //Remove listeners
             this.eventBus.$off('resizeEvent', this.resizeEventHandler);
-            this.eventBus.$off('dragEvent', this.dragEventHandler);
+            this.eventBus.$off('dragEvent', this.dragEventHandlepmr);
             removeWindowEventListener("resize", this.onWindowResize);
         },
         mounted: function() {
@@ -162,6 +163,9 @@
             },
             colNum: function (val) {
                 this.eventBus.$emit("setColNum", val);
+            },
+            margin: function (val) {
+                this.eventBus.$emit("setMargin", val);
             },
             rowHeight: function() {
                 this.eventBus.$emit("setRowHeight", this.rowHeight);
